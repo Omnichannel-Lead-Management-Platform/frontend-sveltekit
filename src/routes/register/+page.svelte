@@ -1,17 +1,20 @@
 <script>
 	import { register } from '$lib/api/auth.js';
+	import Alert from '$lib/components/Alert.svelte';
 	
-	let name = '';
-	let companyName = '';
-	let email = '';
-	let password = '';
-	let confirmPassword = '';
-	let isLoading = false;
-	let errorMessage = '';
+	let name = $state('');
+	let companyName = $state('');
+	let email = $state('');
+	let password = $state('');
+	let confirmPassword = $state('');
+	let isLoading = $state(false);
+	let errorMessage = $state('');
+	let successMessage = $state('');
 
 	async function handleRegister(e) {
 		e.preventDefault();
 		errorMessage = '';
+		successMessage = '';
 
 		if (password !== confirmPassword) {
 			errorMessage = "Passwords do not match.";
@@ -26,9 +29,15 @@
 		isLoading = true;
 		
 		try {
-			await register(email, password, name, companyName);
-			// Redirect to login or auto-login on success
-			window.location.href = '/login?registered=true'; 
+			const res = await register(email, password, confirmPassword, name, companyName);
+			successMessage = res.message || "Successfully signed up to the system and logged in!";
+			
+			// Wait 2 seconds so the user can read the success notification
+			setTimeout(() => {
+				// Since Authboss automatically logs the user in upon registration,
+				// we redirect to the dashboard instead of the login page.
+				window.location.href = '/'; 
+			}, 2000);
 		} catch (error) {
 			errorMessage = error.message;
 		} finally {
@@ -48,7 +57,7 @@
 			<p>Join the Omnichannel platform today</p>
 		</div>
 
-		<form on:submit={handleRegister} class="login-form">
+		<form onsubmit={handleRegister} class="login-form">
 			<div class="input-group">
 				<label for="name">Full Name</label>
 				<input 
@@ -95,6 +104,7 @@
 					placeholder="••••••••"
 					required 
 				/>
+				<p class="password-help">Password must contain at least 8 characters, including one uppercase letter, one lowercase letter, and one symbol.</p>
 			</div>
 
 			<div class="input-group">
@@ -109,9 +119,8 @@
 				/>
 			</div>
 
-			{#if errorMessage}
-				<p class="text-error animate-enter">{errorMessage}</p>
-			{/if}
+			<Alert type="error" message={errorMessage} />
+			<Alert type="success" message={successMessage} submessage="Redirecting to your dashboard..." />
 
 			<button type="submit" class="btn-premium" disabled={isLoading}>
 				{#if isLoading}
@@ -208,6 +217,13 @@
 		animation: spin 1s ease-in-out infinite;
 		margin-right: 8px;
 		vertical-align: middle;
+	}
+
+	.password-help {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		opacity: 0.8;
+		margin-top: 4px;
 	}
 
 	@keyframes spin {

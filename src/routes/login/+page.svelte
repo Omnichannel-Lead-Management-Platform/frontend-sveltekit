@@ -1,20 +1,27 @@
 <script>
 	import { login } from '$lib/api/auth.js';
+	import Alert from '$lib/components/Alert.svelte';
 	
-	let email = '';
-	let password = '';
-	let isLoading = false;
-	let errorMessage = '';
+	let email = $state('');
+	let password = $state('');
+	let isLoading = $state(false);
+	let errorMessage = $state('');
+	let successMessage = $state('');
 
 	async function handleLogin(e) {
 		e.preventDefault();
 		isLoading = true;
 		errorMessage = '';
+		successMessage = '';
 		
 		try {
-			await login(email, password);
-			// Redirect or update store on success
-			window.location.href = '/dashboard'; 
+			const res = await login(email, password);
+			successMessage = res.message || "Successfully signed in!";
+			
+			// Wait 2 seconds so the user can read the success notification
+			setTimeout(() => {
+				window.location.href = '/'; 
+			}, 2000);
 		} catch (error) {
 			errorMessage = error.message;
 		} finally {
@@ -34,7 +41,7 @@
 			<p>Sign in to your Omnichannel account</p>
 		</div>
 
-		<form on:submit={handleLogin} class="login-form">
+		<form onsubmit={handleLogin} class="login-form">
 			<div class="input-group">
 				<label for="email">Email Address</label>
 				<input 
@@ -59,9 +66,8 @@
 				/>
 			</div>
 
-			{#if errorMessage}
-				<p class="text-error animate-enter">{errorMessage}</p>
-			{/if}
+			<Alert type="error" message={errorMessage} />
+			<Alert type="success" message={successMessage} submessage="Redirecting to your dashboard..." />
 
 			<button type="submit" class="btn-premium" disabled={isLoading}>
 				{#if isLoading}

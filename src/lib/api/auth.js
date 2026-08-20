@@ -15,7 +15,7 @@ export async function login(email, password) {
 
 		if (!response.ok) {
 			const errorData = await response.json().catch(() => null);
-			throw new Error(errorData?.error || 'Login failed. Please check your credentials.');
+			throw new Error(errorData?.message || 'Login failed. Please check your credentials.');
 		}
 
 		return await response.json();
@@ -25,7 +25,7 @@ export async function login(email, password) {
 	}
 }
 
-export async function register(email, password, name, companyName) {
+export async function register(email, password, confirmPassword, name, companyName) {
 	try {
 		const response = await fetch('/api/auth/register', {
 			method: 'POST',
@@ -34,7 +34,8 @@ export async function register(email, password, name, companyName) {
 			},
 			body: JSON.stringify({ 
 				email, 
-				password, 
+				password,
+				confirm_password: confirmPassword, 
 				name, 
 				company_name: companyName 
 			}),
@@ -43,7 +44,7 @@ export async function register(email, password, name, companyName) {
 
 		if (!response.ok) {
 			const errorData = await response.json().catch(() => null);
-			throw new Error(errorData?.error || 'Registration failed. Please try again.');
+			throw new Error(errorData?.message || 'Registration failed. Please try again.');
 		}
 
 		return await response.json();
