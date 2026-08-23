@@ -21,5 +21,5 @@
 		<circle cx="22" cy="18" r="4.5" fill="white" />
 		<circle cx="14" cy="23" r="2.5" fill="white" />
 	</svg>
-	<span class="font-medium tracking-tight text-slate-900 {sizes[size].label}">what funnel</span>
+	<span class="font-medium tracking-tight text-slate-900 {sizes[size].label}">Omnichannel</span>
 </div>
