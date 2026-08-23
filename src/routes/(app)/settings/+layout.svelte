@@ -1,14 +1,14 @@
 <script>
-	import '../../app.css';
+	import '../../../app.css';
 	import BrandLogo from '$lib/components/BrandLogo.svelte';
 	
 	let { children } = $props();
 </script>
 
-<div class="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
+<div class="h-full w-full bg-slate-50 flex flex-col md:flex-row font-sans">
 	
 	<!-- Sidebar -->
-	<aside class="w-full md:w-64 bg-white border-r border-slate-200 flex-shrink-0 min-h-screen">
+	<aside class="w-full md:w-64 bg-white border-r border-slate-200 flex-shrink-0 h-full">
 		<div class="p-6">
 			<BrandLogo size="sm" />
 		</div>
