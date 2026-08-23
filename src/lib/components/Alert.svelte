@@ -3,72 +3,30 @@
 </script>
 
 {#if message}
-    <div class="alert alert-{type} animate-enter">
-        <div class="alert-icon">
+    <div class="flex items-start gap-2.5 p-3.5 mt-5 animate-enter {type === 'error' ? 'wf-alert-error' : 'wf-alert-success'}">
+        <div class="shrink-0 mt-0.5">
             {#if type === 'error'}
                 <!-- Error Icon SVG -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <svg class="w-4 h-4 text-rose-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
             {:else}
                 <!-- Success Icon SVG -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <svg class="w-4 h-4 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
             {/if}
         </div>
-        <div class="alert-content">
-            <p class="alert-message">{message}</p>
+        <div class="flex flex-col gap-1 text-xs sm:text-sm leading-relaxed">
+            <p class="font-medium">{message}</p>
             {#if submessage}
-                <p class="alert-submessage">{submessage}</p>
+                <p class="opacity-90 text-xs">{submessage}</p>
             {/if}
         </div>
     </div>
 {/if}
 
 <style>
-    .alert {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        padding: 12px 16px;
-        border-radius: 8px;
-        text-align: left;
-        margin-bottom: 8px;
-    }
-
-    .alert-error {
-        background-color: rgba(239, 68, 68, 0.1);
-        border: 1px solid rgba(239, 68, 68, 0.3);
-        color: #ef4444;
-    }
-
-    .alert-success {
-        background-color: rgba(34, 197, 94, 0.1);
-        border: 1px solid rgba(34, 197, 94, 0.3);
-        color: #16a34a;
-    }
-
-    .alert-icon {
-        flex-shrink: 0;
-        margin-top: 2px;
-    }
-
-    .alert-content {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-
-    .alert-message {
-        font-weight: 500;
-        font-size: 0.95rem;
-        line-height: 1.4;
-        margin: 0;
-    }
-
-    .alert-submessage {
-        font-size: 0.8rem;
-        opacity: 0.8;
-        margin: 0;
-    }
-
     .animate-enter {
         animation: slideIn 0.3s ease-out forwards;
     }
