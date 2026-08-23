@@ -151,7 +151,7 @@ FAQs:
                     ai_mode: data.aiMode
                 });
 				
-				goto('/settings');
+				goto('/login');
 			}
 		} catch (err) {
 			error = err?.message || 'Something went wrong';
