@@ -53,3 +53,27 @@ export async function register(email, password, confirmPassword, name, companyNa
 		throw error;
 	}
 }
+
+export async function apiRequest(endpoint, method = 'GET', body = null) {
+	try {
+		const options = {
+			method,
+			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include'
+		};
+		if (body) {
+			options.body = JSON.stringify(body);
+		}
+		const res = await fetch(endpoint, options);
+		if (!res.ok) {
+			let err;
+			try { err = await res.json(); } catch(e) {}
+			throw new Error(err?.message || `API request failed with status ${res.status}`);
+		}
+		return await res.json();
+	} catch (err) {
+		throw err;
+	}
+
+
+}
