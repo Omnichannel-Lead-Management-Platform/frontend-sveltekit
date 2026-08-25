@@ -33,6 +33,12 @@
 				</svg>
 				Users & Permissions
 			</a>
+			<a href="/settings/roles" class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-colors">
+				<svg class="w-5 h-5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+				</svg>
+				Roles
+			</a>
 		</nav>
 	</aside>
 

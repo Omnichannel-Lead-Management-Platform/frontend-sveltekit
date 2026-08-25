@@ -1,192 +1,170 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { apiRequest } from '$lib/api/auth';
+	import { listUsers, generateInvite, updateUserRole, getRoles } from '$lib/api/auth.js';
 	import Alert from '$lib/components/Alert.svelte';
 
 	let users = $state([]);
+	let roles = $state([]);
 	let loading = $state(true);
 	let error = $state('');
-	
-	let inviteEmail = $state('');
-	let inviteRole = $state('agent');
-	let inviting = $state(false);
-	let inviteSuccess = $state('');
+
+	let inviteLink = $state('');
+	let inviteLoading = $state(false);
 	let inviteError = $state('');
 
-	async function loadUsers() {
-		try {
-			loading = true;
-			const res = await apiRequest('/api/auth/users', 'GET');
-			users = res.data || [];
-		} catch (err) {
-			error = err.message || 'Failed to load team members';
-		} finally {
-			loading = false;
-		}
-	}
-
-	async function updateRole(userId: string, newRole: string) {
-		try {
-			await apiRequest(`/api/auth/users/${userId}/role`, 'PUT', { role: newRole });
-			// update local state
-			users = users.map((u) => u.id === userId ? { ...u, role: newRole } : u);
-		} catch (err) {
-			error = err.message || 'Failed to update user role';
-		}
-	}
-
-	async function handleInvite(e: Event) {
-		e.preventDefault();
-		inviting = true;
-		inviteSuccess = '';
-		inviteError = '';
-
-		try {
-			const res = await apiRequest('/api/auth/invite', 'POST', {
-				email: inviteEmail,
-				role: inviteRole
-			});
-			inviteSuccess = `Invitation sent to ${inviteEmail}. Token: ${res.data?.token}`;
-			inviteEmail = '';
-		} catch (err) {
-			inviteError = err.message || 'Failed to send invite';
-		} finally {
-			inviting = false;
-		}
-	}
-
-	onMount(() => {
-		loadUsers();
+	onMount(async () => {
+		await Promise.all([loadUsers(), loadRoles()]);
+		loading = false;
 	});
+
+	async function loadUsers() {
+		error = '';
+		try {
+			const res = await listUsers();
+			if (res.status === 'success') {
+				users = res.data || [];
+			}
+		} catch (err) {
+			error = err?.message || 'Failed to load users';
+		}
+	}
+
+	async function loadRoles() {
+		try {
+			const res = await getRoles();
+			if (res.status === 'success') {
+				roles = res.data || [];
+			}
+		} catch (err) {
+			console.error("Failed to load roles:", err);
+		}
+	}
+
+	async function handleGenerateInvite(e: Event) {
+		e.preventDefault();
+		inviteLoading = true;
+		inviteError = '';
+		inviteLink = '';
+
+		try {
+			const res = await generateInvite();
+			if (res.status === 'success') {
+				inviteLink = res.data.invite_link;
+			}
+		} catch (err) {
+			inviteError = err?.message || 'Failed to generate invite';
+		} finally {
+			inviteLoading = false;
+		}
+	}
+
+	async function handleUpdateRole(userId: string, newRoleId: string) {
+		try {
+			await updateUserRole(userId, newRoleId);
+			// Show success somehow or just let it be silent
+		} catch (err) {
+			error = err?.message || 'Failed to update user role';
+		}
+	}
 </script>
 
 <svelte:head>
 	<title>Users & Permissions - Omnichannel</title>
 </svelte:head>
 
-<div class="p-6 md:p-10 max-w-5xl mx-auto w-full">
-	
+<div class="max-w-4xl mx-auto p-6 md:p-8">
 	<div class="mb-8">
-		<h1 class="text-2xl font-bold text-slate-900 tracking-tight">Users & Permissions</h1>
-		<p class="text-sm text-slate-500 mt-1">Manage who has access to this workspace and what they can do.</p>
+		<h1 class="text-2xl font-bold text-slate-900">Users & Permissions</h1>
+		<p class="text-slate-500 mt-1">Manage your team members and their roles within this workspace.</p>
 	</div>
-
-	{#if error}
-		<Alert type="error" message={error} />
-	{/if}
 
 	<!-- Invite Section -->
-	<div class="wf-card p-6 mb-8 bg-white border border-slate-200 rounded-xl shadow-sm">
-		<h2 class="text-lg font-medium text-slate-900 mb-4">Invite Member</h2>
-		
-		{#if inviteError}
-			<Alert type="error" message={inviteError} />
-		{/if}
-		{#if inviteSuccess}
-			<Alert type="success" message={inviteSuccess} />
-		{/if}
+	<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+		<div class="px-6 py-5 border-b border-slate-200">
+			<h2 class="text-lg font-semibold text-slate-900">Invite new member</h2>
+		</div>
+		<div class="p-6 bg-slate-50">
+			<form onsubmit={handleGenerateInvite} class="flex flex-col sm:flex-row gap-4">
+				<button 
+					type="submit" 
+					disabled={inviteLoading}
+					class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+				>
+					{inviteLoading ? 'Generating...' : 'Generate Invite Link'}
+				</button>
+			</form>
 
-		<form onsubmit={handleInvite} class="flex flex-col sm:flex-row gap-4 items-end">
-			<div class="flex-1 w-full">
-				<label for="invite-email" class="block text-xs font-medium text-slate-700 mb-1.5">Email Address</label>
-				<input
-					type="email"
-					id="invite-email"
-					bind:value={inviteEmail}
-					placeholder="colleague@example.com"
-					required
-					disabled={inviting}
-					class="wf-input py-2 px-3 text-sm placeholder:text-slate-400 w-full"
-				/>
-			</div>
-			
-			<div class="w-full sm:w-48">
-				<label for="invite-role" class="block text-xs font-medium text-slate-700 mb-1.5">Role</label>
-				<div class="relative">
-					<select
-						id="invite-role"
-						bind:value={inviteRole}
-						disabled={inviting}
-						class="wf-input py-2 px-3 text-sm appearance-none w-full bg-white"
-					>
-						<option value="agent">Agent</option>
-						<option value="admin">Admin</option>
-					</select>
-					<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500">
-						<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+			{#if inviteError}
+				<div class="mt-4 text-sm text-red-600 font-medium">
+					{inviteError}
+				</div>
+			{/if}
+
+			{#if inviteLink}
+				<div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+					<p class="text-sm text-green-800 font-medium mb-2">Invite generated successfully!</p>
+					<p class="text-xs text-green-700 mb-3">Send this link to the user to join your workspace:</p>
+					<div class="flex gap-2">
+						<input type="text" readonly value={inviteLink} class="flex-1 px-3 py-2 text-sm bg-white border border-green-300 rounded-md outline-none" />
+						<button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors" onclick={() => navigator.clipboard.writeText(inviteLink)}>
+							Copy
+						</button>
 					</div>
 				</div>
-			</div>
-
-			<button
-				type="submit"
-				disabled={inviting}
-				class="wf-button-primary py-2 px-5 text-sm h-[38px] whitespace-nowrap"
-			>
-				{inviting ? 'Sending...' : 'Send Invite'}
-			</button>
-		</form>
+			{/if}
+		</div>
 	</div>
 
-	<!-- Team List -->
-	<div class="wf-card bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-		<div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-			<h2 class="text-sm font-semibold text-slate-800">Team Members</h2>
+	<!-- Users List -->
+	<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+		<div class="px-6 py-5 border-b border-slate-200 flex justify-between items-center">
+			<h2 class="text-lg font-semibold text-slate-900">Team Members</h2>
 		</div>
 
 		{#if loading}
-			<div class="p-8 text-center text-slate-400 text-sm">
-				<svg class="animate-spin h-6 w-6 mx-auto mb-2 text-blue-600" viewBox="0 0 24 24" fill="none">
-					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-				</svg>
-				Loading team members...
-			</div>
-		{:else if users.length === 0}
-			<div class="p-8 text-center text-slate-500 text-sm">
-				No team members found.
+			<div class="p-8 text-center text-slate-500">Loading users...</div>
+		{:else if error}
+			<div class="p-8">
+				<Alert type="error" message={error} />
 			</div>
 		{:else}
 			<div class="overflow-x-auto">
-				<table class="w-full text-left border-collapse">
-					<thead>
-						<tr class="border-b border-slate-100">
-							<th class="px-6 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">User</th>
-							<th class="px-6 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Role</th>
-							<th class="px-6 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Joined</th>
+				<table class="w-full text-left text-sm text-slate-600">
+					<thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+						<tr>
+							<th class="px-6 py-4">User</th>
+							<th class="px-6 py-4">Role</th>
 						</tr>
 					</thead>
-					<tbody class="divide-y divide-slate-100">
+					<tbody class="divide-y divide-slate-200">
 						{#each users as user}
-							<tr class="hover:bg-slate-50/50 transition-colors">
+							<tr class="hover:bg-slate-50 transition-colors">
 								<td class="px-6 py-4">
 									<div class="flex items-center gap-3">
-										<div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold shrink-0">
+										<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
 											{user.name ? user.name.charAt(0).toUpperCase() : 'U'}
 										</div>
 										<div>
-											<div class="text-sm font-medium text-slate-900">{user.name}</div>
-											<div class="text-xs text-slate-500">{user.email}</div>
+											<div class="font-medium text-slate-900">{user.name || 'Unnamed User'}</div>
+											<div class="text-slate-500 text-xs">{user.email}</div>
 										</div>
 									</div>
 								</td>
 								<td class="px-6 py-4">
-									<div class="relative w-32">
-										<select
-											value={user.role}
-											onchange={(e) => updateRole(user.id, e.target.value)}
-											class="wf-input py-1.5 px-3 text-xs appearance-none w-full bg-white font-medium border-slate-200 hover:border-slate-300 focus:border-blue-500 cursor-pointer"
+									<div class="relative w-48">
+										<select 
+											value={user.role_id} 
+											onchange={(e) => handleUpdateRole(user.id, (e.target as HTMLSelectElement).value)}
+											class="w-full appearance-none px-3 py-2 bg-white border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
 										>
-											<option value="admin">Admin</option>
-											<option value="agent">Agent</option>
+											{#each roles as role}
+												<option value={role.id}>{role.name}</option>
+											{/each}
 										</select>
-										<div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400">
-											<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+										<div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-500">
+											<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
 										</div>
 									</div>
-								</td>
-								<td class="px-6 py-4 text-sm text-slate-500">
-									{new Date(user.createdAt).toLocaleDateString()}
 								</td>
 							</tr>
 						{/each}
@@ -195,5 +173,4 @@
 			</div>
 		{/if}
 	</div>
-
 </div>
