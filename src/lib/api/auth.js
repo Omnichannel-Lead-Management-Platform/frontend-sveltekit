@@ -149,3 +149,11 @@ export async function getRolePermissions(roleId) {
 export async function createRole(name, permissions) {
 	return apiRequest('/api/auth/roles', 'POST', { name, permissions });
 }
+
+export async function updateRolePermissions(roleId, permissions) {
+	return apiRequest(`/api/auth/roles/${roleId}/permissions`, 'PUT', { permissions });
+}
+
+export async function deleteRole(roleId) {
+	return apiRequest(`/api/auth/roles/${roleId}`, 'DELETE');
+}
