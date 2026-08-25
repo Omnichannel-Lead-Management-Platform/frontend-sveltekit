@@ -1,6 +1,7 @@
 <script>
 	import { register } from '$lib/api/auth.js';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { onboardingStore } from '$lib/stores/onboarding';
 	import Alert from '$lib/components/Alert.svelte';
 	import BrandLogo from '$lib/components/BrandLogo.svelte';
@@ -17,6 +18,7 @@
 	let showPassword = $state(false);
 	let showConfirmPassword = $state(false);
 	let workspaceType = $state('full');
+	let inviteToken = $derived($page.url.searchParams.get('invite_token'));
 
 	async function handleRegister(e) {
 		e.preventDefault();
@@ -36,15 +38,18 @@
 		isLoading = true;
 		
 		try {
-			const res = await register(email, password, confirmPassword, name, companyName);
+			const res = await register(email, password, confirmPassword, name, companyName, inviteToken);
 			successMessage = "Account created! Moving to onboarding...";
 			
 			// Wait 2 seconds so the user can read the success notification
 			setTimeout(() => {
-				// Since Authboss automatically logs the user in upon registration,
-				// we redirect to the dashboard instead of the login page.
-				onboardingStore.update(s => ({ ...s, businessName: companyName || name, businessType: 'Agency', timezone: 'UTC' }));
-				goto('/onboarding/1'); 
+				if (inviteToken) {
+					// User joined via invite, skip onboarding
+					goto('/login');
+				} else {
+					onboardingStore.update(s => ({ ...s, businessName: companyName || name, businessType: 'Agency', timezone: 'UTC' }));
+					goto('/onboarding/1'); 
+				}
 			}, 2000);
 		} catch (error) {
 			errorMessage = error.message;

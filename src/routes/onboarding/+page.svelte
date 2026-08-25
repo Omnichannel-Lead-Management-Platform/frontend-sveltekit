@@ -21,38 +21,9 @@
 		review_finish: 6
 	};
 
-	onMount(async () => {
-		try {
-			await apiRequest('/auth/me');
-		} catch {
-			goto('/login');
-			return;
-		}
-
-		try {
-			const status = await apiRequest('/onboarding/status');
-
-			if (status?.completed_at) {
-				goto('/inbox');
-				return;
-			}
-
-			const completed: string[] = status?.completed_steps ?? [];
-			const skipped: string[] = status?.skipped_steps ?? [];
-
-			// Find first step not completed and not skipped
-			for (const key of STEP_KEYS) {
-				if (!completed.includes(key) && !skipped.includes(key)) {
-					goto(`/onboarding/${STEP_KEY_TO_NUM[key]}`);
-					return;
-				}
-			}
-
-			// All steps completed or skipped => go to step 7 (success)
-			goto('/onboarding/7');
-		} catch (err) {
-			goto('/onboarding/1');
-		}
+	onMount(() => {
+		// Bypass non-existent API checks and start onboarding UI
+		goto('/onboarding/1');
 	});
 </script>
 

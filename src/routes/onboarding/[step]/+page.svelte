@@ -151,7 +151,8 @@ FAQs:
                     ai_mode: data.aiMode
                 });
 				
-				goto('/login');
+				// User is already authenticated from registration auto-login, go to dashboard!
+				goto('/');
 			}
 		} catch (err) {
 			error = err?.message || 'Something went wrong';
